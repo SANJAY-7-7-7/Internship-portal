@@ -9,38 +9,79 @@ export default function ApplicationForm({ internship, onApplicationSuccess }) {
   });
 
   const [fieldErrors, setFieldErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [successData, setSuccessData] = useState(null);
 
-  const validate = () => {
+  // Validate an individual field and return its error message (or empty string if valid)
+  const validateField = (name, value) => {
+    const trimmed = String(value || '').trim();
+
+    switch (name) {
+      case 'studentName': {
+        if (!trimmed) {
+          return 'Full name is required.';
+        }
+        if (trimmed.length < 2) {
+          return 'Name must be at least 2 characters long.';
+        }
+        if (trimmed.length > 80) {
+          return 'Name cannot exceed 80 characters.';
+        }
+        const nameRegex = /^[a-zA-Z\s.'-]+$/;
+        if (!nameRegex.test(trimmed) || !/[a-zA-Z]{2,}/.test(trimmed)) {
+          return 'Name can only contain alphabetic letters, spaces, hyphens, and periods.';
+        }
+        return '';
+      }
+
+      case 'email': {
+        if (!trimmed) {
+          return 'Email address is required.';
+        }
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(trimmed)) {
+          return 'Please enter a valid email address (e.g., student@college.edu).';
+        }
+        if (trimmed.length > 254) {
+          return 'Email cannot exceed 254 characters.';
+        }
+        return '';
+      }
+
+      case 'rollNumber': {
+        if (!trimmed) {
+          return 'Student roll number is required.';
+        }
+        if (trimmed.length < 3) {
+          return 'Roll number must be at least 3 characters.';
+        }
+        if (trimmed.length > 30) {
+          return 'Roll number cannot exceed 30 characters.';
+        }
+        const rollRegex = /^[a-zA-Z0-9\-_/]+$/;
+        if (!rollRegex.test(trimmed) || !/[a-zA-Z0-9]/.test(trimmed)) {
+          return 'Roll number must be alphanumeric (e.g., 24BCS101, CS-2024-001).';
+        }
+        return '';
+      }
+
+      default:
+        return '';
+    }
+  };
+
+  // Full form validation
+  const validateForm = () => {
     const errors = {};
-    const name = formData.studentName.trim();
-    const email = formData.email.trim();
-    const roll = formData.rollNumber.trim();
+    const nameErr = validateField('studentName', formData.studentName);
+    const emailErr = validateField('email', formData.email);
+    const rollErr = validateField('rollNumber', formData.rollNumber);
 
-    if (!name) {
-      errors.studentName = 'Student name is required.';
-    } else if (name.length < 2) {
-      errors.studentName = 'Student name must be at least 2 characters.';
-    } else if (name.length > 100) {
-      errors.studentName = 'Student name cannot exceed 100 characters.';
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      errors.email = 'Email address is required.';
-    } else if (!emailRegex.test(email)) {
-      errors.email = 'Please provide a valid email format (e.g., student@college.edu).';
-    } else if (email.length > 254) {
-      errors.email = 'Email cannot exceed 254 characters.';
-    }
-
-    if (!roll) {
-      errors.rollNumber = 'Roll number is required.';
-    } else if (roll.length > 40) {
-      errors.rollNumber = 'Roll number cannot exceed 40 characters.';
-    }
+    if (nameErr) errors.studentName = nameErr;
+    if (emailErr) errors.email = emailErr;
+    if (rollErr) errors.rollNumber = rollErr;
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -49,10 +90,20 @@ export default function ApplicationForm({ internship, onApplicationSuccess }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (fieldErrors[name]) {
-      setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+
+    // If the field was already touched, validate dynamically as the user types
+    if (touched[name]) {
+      const err = validateField(name, value);
+      setFieldErrors((prev) => ({ ...prev, [name]: err }));
     }
     setSubmitError('');
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    const err = validateField(name, value);
+    setFieldErrors((prev) => ({ ...prev, [name]: err }));
   };
 
   const handleSubmit = async (e) => {
@@ -60,7 +111,14 @@ export default function ApplicationForm({ internship, onApplicationSuccess }) {
     setSubmitError('');
     setSuccessData(null);
 
-    if (!validate()) {
+    // Mark all as touched
+    setTouched({
+      studentName: true,
+      email: true,
+      rollNumber: true,
+    });
+
+    if (!validateForm()) {
       return;
     }
 
@@ -80,15 +138,18 @@ export default function ApplicationForm({ internship, onApplicationSuccess }) {
       setSuccessData({
         message: result.message || 'Application submitted successfully!',
         applicationId: result.applicationId || result.application?._id,
+        studentName: payload.studentName,
+        rollNumber: payload.rollNumber,
       });
 
-      // Clear the form
+      // Clear the form and reset touched states
       setFormData({
         studentName: '',
         email: '',
         rollNumber: '',
       });
       setFieldErrors({});
+      setTouched({});
 
       if (onApplicationSuccess) {
         onApplicationSuccess(result);
@@ -114,6 +175,9 @@ export default function ApplicationForm({ internship, onApplicationSuccess }) {
           <div className="alert-icon">✓</div>
           <div>
             <strong>{successData.message}</strong>
+            <p style={{ marginTop: '0.25rem', fontSize: '0.875rem' }}>
+              Student: <strong>{successData.studentName}</strong> (Roll: <strong>{successData.rollNumber}</strong>)
+            </p>
             {successData.applicationId && (
               <p className="application-id-tag">
                 Application Reference ID: <code>{successData.applicationId}</code>
@@ -143,7 +207,9 @@ export default function ApplicationForm({ internship, onApplicationSuccess }) {
             name="studentName"
             value={formData.studentName}
             onChange={handleChange}
-            placeholder="e.g., Jane Doe"
+            onBlur={handleBlur}
+            placeholder="e.g., Alex Johnson"
+            maxLength={80}
             className={`form-input ${fieldErrors.studentName ? 'input-error' : ''}`}
             disabled={submitting}
             autoComplete="name"
@@ -164,7 +230,9 @@ export default function ApplicationForm({ internship, onApplicationSuccess }) {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="e.g., student@university.edu"
+            onBlur={handleBlur}
+            placeholder="e.g., alex.johnson@college.edu"
+            maxLength={254}
             className={`form-input ${fieldErrors.email ? 'input-error' : ''}`}
             disabled={submitting}
             autoComplete="email"
@@ -185,7 +253,9 @@ export default function ApplicationForm({ internship, onApplicationSuccess }) {
             name="rollNumber"
             value={formData.rollNumber}
             onChange={handleChange}
-            placeholder="e.g., 24BCS101"
+            onBlur={handleBlur}
+            placeholder="e.g., 24BCS101 or CS-2024-001"
+            maxLength={30}
             className={`form-input ${fieldErrors.rollNumber ? 'input-error' : ''}`}
             disabled={submitting}
             required

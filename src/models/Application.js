@@ -7,7 +7,8 @@ const applicationSchema = new mongoose.Schema(
       required: [true, 'Student name is required'],
       trim: true,
       minlength: [2, 'Name must contain at least 2 characters'],
-      maxlength: [100, 'Name cannot exceed 100 characters'],
+      maxlength: [80, 'Name cannot exceed 80 characters'],
+      match: [/^[a-zA-Z\s.'-]+$/, 'Name can only contain letters, spaces, hyphens, and periods'],
     },
     email: {
       type: String,
@@ -15,14 +16,22 @@ const applicationSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       maxlength: [254, 'Email cannot exceed 254 characters'],
-      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email address'],
+      match: [
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        'Please enter a valid email address (e.g., student@college.edu)',
+      ],
     },
     rollNumber: {
       type: String,
       required: [true, 'Roll number is required'],
       trim: true,
       uppercase: true,
-      maxlength: [40, 'Roll number cannot exceed 40 characters'],
+      minlength: [3, 'Roll number must contain at least 3 characters'],
+      maxlength: [30, 'Roll number cannot exceed 30 characters'],
+      match: [
+        /^[A-Z0-9\-_/]+$/,
+        'Roll number must be alphanumeric (letters, numbers, hyphens, or slashes only)',
+      ],
     },
     internshipId: {
       type: String,

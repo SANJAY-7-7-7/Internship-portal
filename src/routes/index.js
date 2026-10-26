@@ -129,22 +129,38 @@ router.post('/applications', async (req, res, next) => {
     const trimmedEmail = String(email).trim().toLowerCase();
     const trimmedRoll = String(rollNumber).trim().toUpperCase();
 
-    if (trimmedName.length < 2 || trimmedName.length > 100) {
+    // Validate Student Name
+    if (trimmedName.length < 2 || trimmedName.length > 80) {
       return res.status(400).json({
-        error: 'Student name must be between 2 and 100 characters long.',
+        error: 'Student name must be between 2 and 80 characters long.',
       });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const nameRegex = /^[a-zA-Z\s.'-]+$/;
+    if (!nameRegex.test(trimmedName) || !/[a-zA-Z]{2,}/.test(trimmedName)) {
+      return res.status(400).json({
+        error: 'Student name can only contain letters, spaces, hyphens, and periods.',
+      });
+    }
+
+    // Validate Email Address
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(trimmedEmail) || trimmedEmail.length > 254) {
       return res.status(400).json({
-        error: 'Please enter a valid email address.',
+        error: 'Please enter a valid email address (e.g., student@college.edu).',
       });
     }
 
-    if (trimmedRoll.length < 1 || trimmedRoll.length > 40) {
+    // Validate Student Roll Number
+    const rollRegex = /^[A-Z0-9\-_/]+$/;
+    if (
+      trimmedRoll.length < 3 ||
+      trimmedRoll.length > 30 ||
+      !rollRegex.test(trimmedRoll) ||
+      !/[A-Z0-9]/.test(trimmedRoll)
+    ) {
       return res.status(400).json({
-        error: 'Roll number must be between 1 and 40 characters.',
+        error: 'Roll number must be between 3 and 30 characters and alphanumeric (e.g., 24BCS101, CS-2024-001).',
       });
     }
 

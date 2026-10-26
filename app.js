@@ -7,42 +7,17 @@ const apiRoutes = require('./src/routes');
 
 const app = express();
 
-// Helper to determine allowed origins dynamically
-function getAllowedOrigins() {
-  const defaultAllowedOrigins = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-  ];
-
-  const envFrontendOrigins = (process.env.FRONTEND_URL || '')
-    .split(',')
-    .map((origin) => origin.trim().replace(/\/+$/, ''))
-    .filter(Boolean);
-
-  return Array.from(new Set([...defaultAllowedOrigins, ...envFrontendOrigins]));
-}
-
+// Dynamic CORS configuration allowing localhost, Cloud Workstations, Vercel, and custom domains
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow non-browser requests (e.g. curl, server-to-server, Render health checks)
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    const normalizedOrigin = origin.trim().replace(/\/+$/, '');
-    const allowed = getAllowedOrigins();
-
-    if (allowed.includes(normalizedOrigin)) {
-      return callback(null, true);
-    }
-
-    return callback(new Error('Not allowed by CORS'));
+    // and dynamically allow all browser origins (localhost, Cloud Workstations, Vercel, etc.)
+    callback(null, true);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true,
+  optionsSuccessStatus: 204,
 };
 
 // Enable CORS and preflight
