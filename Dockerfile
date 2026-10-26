@@ -24,5 +24,6 @@ RUN npm ci --only=production
 
 COPY --from=client-builder /app/client/dist ./client/dist
 
-CMD ["node", "index.js"]
+EXPOSE 5000
 
+CMD ["node", "app.js"]
