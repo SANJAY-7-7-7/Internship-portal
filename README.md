@@ -163,7 +163,7 @@ npm --prefix client run build
 ## 🌐 Production Deployment Guide
 
 ### Render Backend Configuration
-- **Repository**: `https://github.com/Shankar-Prakasam/Internship-portal`
+- **Repository**: `https://github.com/SANJAY-7-7-7/Internship-portal`
 - **Branch**: `main`
 - **Root Directory**: `.` (Repository root)
 - **Environment**: Node
@@ -175,7 +175,7 @@ npm --prefix client run build
   - `NODE_ENV`: `production`
 
 ### Vercel Frontend Configuration
-- **Repository**: `https://github.com/Shankar-Prakasam/Internship-portal`
+- **Repository**: `https://github.com/SANJAY-7-7-7/Internship-portal`
 - **Branch**: `main`
 - **Framework Preset**: Vite
 - **Root Directory**: `client`
